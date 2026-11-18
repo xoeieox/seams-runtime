@@ -21,7 +21,7 @@
   // name:<x> renders as x, other key references render verbatim (they are what the log says).
   const displayName = (e) => {
     const ref = e && typeof e.creator_ref === 'string' ? e.creator_ref : '';
-    if (ref.startsWith('key:ed25519:')) return 'key · ' + (e.node_key_fingerprint || ref.slice(12, 20));
+    if (ref.startsWith('key:ed25519:')) return 'key · ' + (e.node_key_fingerprint || ref.slice(12, 20)) + ' ·' + ref.slice(-5); // fp (first 8) + key tail (last 5, non-unique by design)
     if (ref.startsWith('name:')) return ref.slice(5);
     return ref || 'unknown';
   };
@@ -111,7 +111,7 @@
     const head = document.createElement('div'); head.className = 'rowhead';
     const dot = document.createElement('span');
     dot.className = `dot a${hueSlot(r.ident)}`;
-    head.append(dot, Object.assign(document.createElement('span'), { textContent: r.name, className: 'name' }));
+    head.append(dot, Object.assign(document.createElement('span'), { textContent: r.name, className: 'name', title: r.depositsHref && r.ident ? 'full node key: key:ed25519:' + r.ident : '' }));
     const bd = badge(r); if (bd) head.append(bd);
     head.append(Object.assign(document.createElement('span'), { className: 'when', textContent: ago(r.ts) }));
     const sn = document.createElement('div'); sn.className = 'snippet'; sn.textContent = r.snippet;

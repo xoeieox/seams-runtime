@@ -36,6 +36,10 @@ const store = {
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch { /* private mode */ } },
 };
 
+// key tail (display handle, FIELD-NAMING.md): last 5 chars of the public key, NON-UNIQUE by design;
+// the full embedded key is the only ground truth.
+const tail5 = (ref) => String(ref || '').replace(/^key:ed25519:/, '').slice(-5);
+
 const S = Object.assign({
   view: 'setup', mode: 'manage', tab: 'keys', agentSub: 'queue', setupFrom: null, issueOpen: false, theme: 'light',
   helloBody: null, rail: null, shookAt: null,
@@ -80,7 +84,7 @@ async function sayHello() {
   if (!r.ok || !r.body) {
     S.helloBody = null;
     S.rail = { ran: true, echo: null, pinned: false, skew: true, gateKinds: null, gateOk: false, integrity: 'unconfirmed', integrityRaw: null, formatOk: false, unreachable: true };
-    S.refusal = { name: 'node_unreachable', code: r.status, plain: (r.body && r.body.message) || 'The node-one server did not answer.', builtLater: false, verbatim: true, foot: 'The launcher shows what the server reported — nothing more.' };
+    S.refusal = { name: 'node_unreachable', code: r.status, plain: (r.body && r.body.message) || 'Your local node did not answer.', builtLater: false, verbatim: true, foot: 'The launcher shows what the server reported — nothing more.' };
     render(); return;
   }
   S.helloBody = r.body; S.refusal = null;
@@ -216,7 +220,7 @@ function renderRails() {
     rail.append(ig); return rail;
   }
   if (r.unreachable) {
-    rail.append(h('span', 'skew', 'node-one unreachable'), h('span', 'dim3', 'start it: node eom/node-one/attributed-text/server.mjs'), h('span', 'integrity unconfirmed', 'integrity ?'));
+    rail.append(h('span', 'skew', 'your node is unreachable'), h('span', 'dim3', 'start it: node eom/node-one/attributed-text/server.mjs'), h('span', 'integrity unconfirmed', 'integrity ?'));
     return rail;
   }
   const wire = h('span', null, ['wire ', h('span', 'mono', r.echo ?? '?'), ' ']);
@@ -325,7 +329,7 @@ function renderKeys() {
   } else {
     nodeBox.append(el('p', 'keypub', S.nodeKey.pub));
     const st = S.keyStatus && S.keyStatus.node_key === S.nodeKey.pub ? S.keyStatus : null;
-    const kv = h('dl', 'kv', [el('dt', null, 'role'), el('dd', null, 'node'), el('dt', null, 'status'), el('dd', null, S.registered ? 'active' : 'active · not registered yet'), el('dt', null, 'fingerprint'), el('dd', null, st ? st.fingerprint : '— (fetched from the gateway) · display only, verification uses the full key'), el('dt', null, 'verified deposits'), el('dd', null, st && st.verified_deposits != null ? st.verified_deposits + ' (from /api/deposits at the gateway)' : '— (gateway not reached)'), el('dt', null, 'valid_from'), el('dd', null, S.nodeKey.from)]);
+    const kv = h('dl', 'kv', [el('dt', null, 'role'), el('dd', null, 'node'), el('dt', null, 'status'), el('dd', null, S.registered ? 'active' : 'active · not registered yet'), el('dt', null, 'fingerprint'), Object.assign(el('dd', null, st ? st.fingerprint + ' ·' + tail5(S.nodeKey.pub) : '— (fetched from the gateway) · display only, verification uses the full key'), { title: 'full node key (ground truth): ' + S.nodeKey.pub }), el('dt', null, 'verified deposits'), el('dd', null, st && st.verified_deposits != null ? st.verified_deposits + ' (from /api/deposits at the gateway)' : '— (gateway not reached)'), el('dt', null, 'valid_from'), el('dd', null, S.nodeKey.from)]);
     nodeBox.append(kv);
     const acts = h('div', 'rowlist');
     if (!S.registered) acts.append(btn('Register public half', 'primary', () => announce({})));
@@ -561,7 +565,7 @@ function renderHello() {
       ]),
       el('div', 'opaque-note', 'Hashes are opaque, shown exactly as received.'),
       rc.creator_verified === true
-        ? h('div', 'receipt', [h('div', 'h', [badge('✓ checked', 'ok'), el('span', 'dim', ' the gateway receipt itself carries the creator check as true · fingerprint '), el('span', 'mono dim3', rc.node_key_fingerprint || '—'), tag(true, 'read from the gateway receipt itself, not launcher state')])])
+        ? h('div', 'receipt', [h('div', 'h', [badge('✓ checked', 'ok'), el('span', 'dim', ' the gateway receipt itself carries the creator check as true · fingerprint '), Object.assign(el('span', 'mono dim3', (rc.node_key_fingerprint || '—') + (S.nodeKey && S.nodeKey.pub ? ' ·' + tail5(S.nodeKey.pub) : '')), { title: S.nodeKey && S.nodeKey.pub ? 'full node key (ground truth): ' + S.nodeKey.pub : 'the key behind this receipt; the gateway export carries the full key' }), tag(true, 'read from the gateway receipt itself, not launcher state')])])
         : h('div', 'receipt', [h('div', 'h', [badge('claim', 'warn'), el('span', 'dim', ' name-only claim at the gateway (creator_verified ' + (rc.creator_verified === false ? 'false' : 'absent') + ') - sign it in Keys and re-emit for the ✓')])]),
     ]);
     b3.append(mapped);

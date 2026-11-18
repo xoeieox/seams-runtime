@@ -33,7 +33,7 @@ export const tokenize = (s) => s.match(TOKEN_RE) || [];
 const isWord = (t) => /[\p{L}\p{N}]/u.test(t);
 const wordCount = (segs) => segs.reduce((n, [t]) => n + tokenize(t).filter(isWord).length, 0);
 
-const BAD_CHARS = /[\u0000-\u0008\u000b-\u001f\u007f-\u009f​-‏‪-‮⁦-⁩﻿]/g;
+const BAD_CHARS = /[\u0000-\u0008\u000b-\u001f\u007f-\u009f\u00ad\u061c\u08e2\u180e\u200b-\u200f\u202a-\u202e\u2060-\u2064\u2066-\u2069\ufeff\ufe00]|\udb40\udc01/g; // strip class: WIRE-V0 sec.2 (anti-squat, 2026-11-18); U+E0001 via surrogate pair
 export const normName = (s) =>
   String(s ?? '').normalize('NFKC').replace(BAD_CHARS, '').replace(/\s+/g, ' ').trim().slice(0, MAX_NAME);
 export const nameKey = (s) => normName(s).toLowerCase();

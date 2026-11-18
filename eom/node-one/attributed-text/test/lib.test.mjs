@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { Store, StoreError, diffHunks, merge3, tokenize } from '../lib.mjs';
+import { Store, StoreError, cleanText, diffHunks, merge3, tokenize } from '../lib.mjs';
 
 const owners = (s) => s.head.segs.map(([t, a]) => `${a}:${t}`);
 const mk = () => { const s = new Store(); s.seed('The quick brown fox', 'Ann'); return s; };
@@ -95,4 +95,29 @@ test('diff and merge basics', () => {
   assert.deepEqual(diffHunks(['a'], ['a']), []);
   assert.deepEqual(diffHunks(['a', ' ', 'b'], ['a', ' ', 'c', ' ', 'b']).length, 1);
   assert.equal(merge3(tokenize('a b'), tokenize('a b c'), tokenize('x a b')).join(''), 'x a b c');
+});
+
+// anti-squat (red-team v3 F-25/O1, Erah ruling 2026-11-18): the survivor set joins the
+// stripped class at ingest; the VS16/VS01 siblings are KEPT (WIRE-V0 sec.2).
+test('strip class strips the full invisible survivor set (U+E0001 incl.)', () => {
+  const base = 'The marmot keeps the ledger.';
+  for (const cp of [0x00AD, 0x061C, 0x08E2, 0x180E, 0x2060, 0x2061, 0x2062, 0x2063, 0x2064, 0xFE00, 0xE0001])
+    assert.equal(cleanText(base + String.fromCodePoint(cp)), base, 'survivor U+' + cp.toString(16).toUpperCase());
+});
+test('strip class keeps the variation-selector siblings VS01/VS16 (visible-effect codepoints)', () => {
+  const kept = 'ca\uFE01fe\uFE0Fok';
+  assert.equal(cleanText(kept), kept);
+});
+test('ZWJ/ZWNJ stay in the pre-existing U+200B-U+200F class (documented pre-fix behavior)', () => {
+  assert.equal(cleanText('a\u200Db\u200Cc'), 'abc');
+});
+test('invisible-only edit collapses to no_change - squat space is gone at the edit door', () => {
+  const s = mk();
+  assert.throws(() => s.edit({ name: 'Bob', text: 'The quick brown fox\u2060', baseV: 1 }),
+    (e) => e.code === 'no_change');
+});
+test('invisible-bearing name collapses to the same author', () => {
+  const s = mk();
+  s.edit({ name: 'Ann\u2060', text: 'The quick brown fox jumps', baseV: 1 });
+  assert.equal(s.authors().length, 1);
 });

@@ -15,7 +15,7 @@ goal, you press **Hand off**. That's the whole interaction.
 ## Run it — one command
 
 ```
-node eom/launcher/launch.mjs     # starts (or reuses) node-one + the launcher window, loopback only
+node eom/launcher/launch.mjs     # starts (or reuses) your node + the launcher window, loopback only
 ```
 
 Open **http://127.0.0.1:4173/** — or install it as an app (see
@@ -23,7 +23,7 @@ Open **http://127.0.0.1:4173/** — or install it as an app (see
 `Ctrl-C` stops whatever this command started; a port already busy is reported as
 *“already running — open the URL”*, never an `EADDRINUSE` stack trace. Knobs (all
 optional): `PORT` (4173) · `NODE_ONE_PORT` (8080) · `OPS_DIR` · `NODE_ONE_DATA_DIR` ·
-`NODE_ONE_URL` (expert: proxy to an already-running loopback node-one instead of spawning
+`NODE_ONE_URL` (expert: proxy to an already-running loopback node instead of spawning
 one). On a remote box, port-forward first: `ssh -L 4173:127.0.0.1:4173 <user>@<launcher-box>`.
 
 The two servers can still be run separately:
@@ -42,7 +42,7 @@ Zero dependencies, Node 18+. Ops files the launcher owns live under `OPS_DIR` (d
 **v0 today — download, one node command, a browser window.** Get the seed packet (clone or
 download this repo), have **Node 18+ installed**, run one command, open the printed URL.
 No accounts, no installs, nothing leaves the machine: everything binds 127.0.0.1 and the
-launcher *refuses* any non-loopback node-one. v0 therefore genuinely **requires Node on
+launcher *refuses* any non-loopback node. v0 therefore genuinely **requires Node on
 the device** — the honest bottom line of a zero-dep build with no packaged runtime.
 
 **This pass — one command, an installable app window.** `launch.mjs` does both servers in
@@ -75,7 +75,7 @@ have, what to grow) → **Conform** (check, see gaps) → **hello world to a pee
 **Baseline** (the byte-frozen first export; opaque hashes arrive opaque). There is no
 onboarding funnel that could drift from what the machinery actually does.
 
-## What is REAL (wired to the actual node-one server)
+## What is REAL (wired to the actual local node server)
 
 `server.mjs` is a loopback-only static server **and** a byte-verbatim proxy to
 `eom/node-one/attributed-text/server.mjs` for the three endpoints the launcher
@@ -93,7 +93,7 @@ start if `NODE_ONE_URL` is not loopback. Nothing is mocked on this path:
   (`consent_gate_unbuilt` renders as a built-later 501, never as breakage;
   fork/remix is disabled in the UI and the server refuses it too).
 - **Receipts show opaque hashes as opaque**, exactly as received.
-- The tests boot the real node-one server ephemerally, drive the launcher's
+- The tests boot the real local node server ephemerally, drive the launcher's
   proxy end-to-end, kill it, and verify with `ps` that it is gone.
 
 ## What is STUBBED / ASSERTED (and says so in the UI)
@@ -134,7 +134,7 @@ so the native path is the Mac story — Tauri, same as Kyma, iterate on the lapt
 The `tauri/` directory is a **thin Rust shell, not a fork of the frontend**. It loads the
 exact same UI (`devUrl http://127.0.0.1:4173` → the launcher server) in a chromeless
 tall window (380×640, min 360×560 — the 2a shape), and **supervises the servers for
-you**: on launch it finds and spawns `node launch.mjs` (which spawns node-one + the
+you**: on launch it finds and spawns `node launch.mjs` (which spawns your node + the
 launcher, or cleanly reuses ports already up); on window close it SIGTERMs *its own child
 only* (SIGKILL after a 3 s grace). A server we did not start is never ours to stop.
 If `node` is not on PATH the window opens an honest **“Node.js required”** panel served
@@ -147,7 +147,7 @@ runtime dependencies; the only npm dep is dev-only `@tauri-apps/cli`.
 
 ```bash
 scripts/make-mac-bundle.sh     # writes /var/tmp/eom-bundles/seams-launcher-mac-latest.tar.gz + .sha256
-                               # (flat tree: launcher + tauri shell + the node-one runtime it boots)
+                               # (flat tree: launcher + tauri shell + the local node runtime it boots)
 ```
 
 ### On the Mac (Kyma-style loop)
@@ -243,7 +243,7 @@ Rules the server enforces at queue time (`POST /agent/queue`):
 | file | role |
 | --- | --- |
 | `AGENTS.md` | **the agent's door**: how to read `ops/agent-queue.md`, what the honest-label footer means, where the node docs live, the must-nevers. Queue entries link it by name. |
-| `launch.mjs` | **the one command**: spawns+supervises node-one and the launcher (reuses busy ports cleanly), Ctrl-C reaps both (ps-verified) |
+| `launch.mjs` | **the one command**: spawns+supervises your node and the launcher (reuses busy ports cleanly), Ctrl-C reaps both (ps-verified) |
 | `server.mjs` | loopback static server + verbatim proxy + ops-file/queue endpoints; friendly “already running” on a busy port, never a stack trace |
 | `launcher-core.mjs` | pure logic: pins, gate checks, refusal render table, holds, queue markdown, conform gaps, config parse/render |
 | `public/index.html` · `public/app.js` · `public/app.css` | the window |

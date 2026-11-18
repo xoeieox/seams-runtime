@@ -89,6 +89,8 @@
     return verif.map;
   }
   const isEdKey = (n) => typeof n === 'string' && n.startsWith('key:ed25519:');
+  // key tail (display handle, FIELD-NAMING.md): last 5 chars of the public key, NON-UNIQUE by design.
+  const tail5 = (ref) => String(ref || '').replace(/^key:ed25519:/, '').slice(-5);
   function verifyBadge(name, map) {
     if (!isEdKey(name)) return null;
     const rec = map && map.get(name);
@@ -97,18 +99,18 @@
     const b = el('a', rec && rec.verified ? 'vbadge' : 'claimtag');
     b.href = '#/d/' + encodeURIComponent(name);
     if (rec && rec.verified) {
-      b.textContent = '✓ verified · ' + rec.fp;
-      b.title = 'creator_verified true: the gateway checked this key\u2019s Ed25519 signature at ingest (REQ-SIGN). The fingerprint is the first 8 chars of the public key. No third party verified anything.';
+      b.textContent = '✓ verified · ' + rec.fp + ' ·' + tail5(name);
+      b.title = 'creator_verified true: the gateway checked this key\u2019s Ed25519 signature at ingest (REQ-SIGN). The fingerprint is the first 8 chars of the public key; the ·' + tail5(name) + ' tail is the last 5 chars of the key - display handles are non-unique by design, the full key is the ground truth: ' + name + '. No third party verified anything.';
     } else {
-      b.textContent = 'claim';
-      b.title = 'A key was used but no signature was verified at ingest - this attribution is a claim, not a check.';
+      b.textContent = 'claim ·' + tail5(name);
+      b.title = 'A key was used but no signature was verified at ingest - this attribution is a claim, not a check. The ·' + tail5(name) + ' tail is display-only; full key: ' + name + '.';
     }
     return b;
   }
   function verifWord(name, map) {
     if (!isEdKey(name)) return '';
     const rec = map && map.get(name);
-    return rec && rec.verified ? ' ✓ verified · ' + rec.fp : ' · claim';
+    return rec && rec.verified ? ' ✓ verified · ' + rec.fp + ' ·' + tail5(name) : ' · claim ·' + tail5(name);
   }
 
   // ---------- site-impl rework (board-1c/1d, EOM-SITE-IMPL-2026-10-28) ----------
@@ -137,7 +139,8 @@
     if (found) {
       const e = found[0];
       matched = String(e.text || '');
-      b.append('It landed. Version ' + e.v + ' is on the log, fingerprint ' + (e.node_key_fingerprint || '(none)') + '. ');
+      b.append('It landed. Version ' + e.v + ' is on the log, fingerprint ' + (e.node_key_fingerprint || '(none)') + ' ·' + tail5(e.creator_ref) + '. ');
+      if (typeof e.creator_ref === 'string' && e.creator_ref.startsWith('key:ed25519:')) b.title = 'full node key: ' + e.creator_ref;
       const a = el('a', '', 'Every byte that key deposited'); a.href = '#/d/' + encodeURIComponent(e.creator_ref);
       b.append(a);
     } else {
@@ -494,8 +497,9 @@
       for (const k of keys) {
         const li = el('li');
         const a = el('a'); a.href = '#/d/' + encodeURIComponent(k.ref);
-        const badge = el('span', k.verified ? 'vbadge' : 'claimtag', isEdKey(k.ref) ? (k.verified ? `✓ verified · ${k.fp}` : 'claim') : (k.verified ? '✓ verified · ' + k.fp : 'claim'));
-        const who = el('span', '', isEdKey(k.ref) ? `key · ${k.fp}` : k.ref.replace(/^name:/, ''));
+        if (isEdKey(k.ref)) a.title = 'full node key: ' + k.ref;
+        const badge = el('span', k.verified ? 'vbadge' : 'claimtag', isEdKey(k.ref) ? (k.verified ? `✓ verified · ${k.fp} ·${tail5(k.ref)}` : `claim ·${tail5(k.ref)}`) : (k.verified ? '✓ verified · ' + k.fp : 'claim'));
+        const who = el('span', '', isEdKey(k.ref) ? `key · ${k.fp} ·${tail5(k.ref)}` : k.ref.replace(/^name:/, ''));
         const sub = el('span', 'sub', `${k.count} deposit${k.count === 1 ? '' : 's'} · last ${ago(k.lastTs)}`);
         a.append(who, badge, sub); li.append(a); ul.append(li);
       }
@@ -523,10 +527,11 @@
     const reg = (x.nodes || []).find((n) => n.node_key === ref);
     if (reg && reg.verified) verified = true;
     const badge = el('span', verified ? 'vbadge' : 'claimtag',
-      verified ? `✓ verified${fp ? ' · ' + fp : ''}` : 'claim');
-    badge.title = verified
+      (verified ? `✓ verified${fp ? ' · ' + fp : ''}` : 'claim') + (typeof ref === 'string' && ref.startsWith('key:ed25519:') ? ' ·' + tail5(ref) : ''));
+    badge.title = (verified
       ? 'creator_verified true: the gateway checked this key’s Ed25519 signature at ingest. No third party verified anything.'
-      : 'No signature was verified for this creator - a claim, forever visible as one.';
+      : 'No signature was verified for this creator - a claim, forever visible as one.')
+      + (typeof ref === 'string' && ref.startsWith('key:ed25519:') ? ' Full node key (ground truth): ' + ref : ' The display handle is non-unique by design.');
     const isKeyRef = typeof ref === 'string' && ref.startsWith('key:');
     const meta = el('p', 'meta ui',
       `${entries.length} landing${entries.length === 1 ? '' : 's'} · integrity ${x.integrity && x.integrity.ok ? 'ok' : 'QUARANTINED'} · wire ${x.wire}`);
