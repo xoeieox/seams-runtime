@@ -1,5 +1,4 @@
 SEAMS runtime seed, staged 2026-11-18 - launcher + node-one + endpoint-surface
-(working repo name seams-runtime; final naming is the owner's call)
 
 This file lines up where every shipped artifact came from. Every file in
 this repo is byte-identical to the source-of-record tree (the seams seed
@@ -44,7 +43,7 @@ Conformance
 
 Not shipped here
   The wire spec (spec/), the 131-case counted vector suite and the
-  battle-test selftest live in the protocol repo (working name
+  battle-test selftest live in the protocol repo
   seams-protocol): clone it, run `cd kit && python3 battle.py selftest`,
   expect 131/131. The protocol-side lineage record is the PROVENANCE.txt
   there.

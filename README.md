@@ -3,10 +3,7 @@
 The Seams demo runtime in one box: the launcher UI and your node -
 a reference node you run locally - both loopback-only, zero-dependency Node (stdlib only). The wire
 spec, the 145-case vector suite and the battle-test selftest live in the
-sibling protocol repo (working name `seams-protocol`) - not here.
-
-**Working repo name `seams-runtime` - final naming is the owner's call
-before any push.**
+sibling protocol repo, [github.com/xoeieox/seams](https://github.com/xoeieox/seams) - not here.
 
 ## Quickstart
 
@@ -51,7 +48,7 @@ python3 -m pytest tests/   # conformance; spawns your node on an ephemeral loopb
 
 ## The other half of the split
 
-The protocol repo (working name `seams-protocol`) holds the wire spec
+The protocol repo ([github.com/xoeieox/seams](https://github.com/xoeieox/seams)) holds the wire spec
 (`spec/WIRE-V0.md`), the nine canonical invariants, the counted vector suite
 (145 cases) and the battle-test kit. Clone it and verify with:
 
