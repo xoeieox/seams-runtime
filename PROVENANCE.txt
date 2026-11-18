@@ -1,0 +1,54 @@
+SEAMS runtime seed, staged 2026-11-18 - launcher + node-one + endpoint-surface
+(working repo name seams-runtime; final naming is the owner's call)
+
+This file lines up where every shipped artifact came from. Every file in
+this repo is byte-identical to the source-of-record tree (the seams seed
+tree of 2026-10-29, branch eom-node-one, head 2bfcaa2 2026-10-28); this
+split edited none of them.
+
+Launcher (eom/launcher/)
+  One command, both servers, loopback only: launch.mjs spawns the node-one
+  server on 127.0.0.1:8080 and serves the launcher UI on 127.0.0.1:4173,
+  supervising only what it spawns. The UI runtime is zero-dependency (plain
+  HTML/CSS/JS served by server.mjs); the Tauri CLI in package.json
+  devDependencies is build tooling for the Mac bundle
+  (scripts/make-mac-bundle.sh), never imported at runtime. Design lineage:
+  the design handoff of 2026-10-26 under
+  eom/launcher/design-handoff-2026-10-26/, shipped verbatim with
+  CHECKSUMS.sha256 pinning the handoff files.
+
+Node-one (eom/node-one/attributed-text/)
+  The demo node: one page of text anyone can change; every word keeps the
+  name of who wrote it. Browser-minted keys, announce, signed deposits
+  (KEYS pass, 2026-10-28); author hue derived from identity, not list
+  position, and the verified badge is a visual class
+  (EOM-DEMO-UI-FIXWAVE-2026-10-28, legs 1-4); the human-first site pass is
+  SEAMS-SITE-IMPL-2026-10-28 (owner GO), the last seeding wave on the
+  eom-node-one branch (2026-10-26 through 2026-10-28). Node >= 18, Node
+  stdlib only; the suite runs under `node --test test/*.test.mjs`.
+
+Endpoint surface (eom/endpoint-surface/)
+  The join-gate contract as delivered on the eom-node-one leg:
+  requirements.yaml (REQ-HELLO-1..4, REQ-EMIT-1..9, REQ-EXPORT-1..5, the
+  join-gate accept/refuse tables, the rate policy), key custody provenance
+  (KEYS-PROVENANCE-2026-10-28.md, artifact digests and verified-live vs
+  asserted split), and the Cloudflare tunnel template with fingerprint
+  verification (config.template.yaml, verify-tunnel-fingerprint.sh,
+  deploy-prep notes).
+
+Conformance
+  tests/test_endpoint_conformance.py certifies the join against
+  requirements.yaml: it spawns node-one loopback-only (PORT=0, ephemeral
+  port, throwaway data dir), asserts every named policy and REQ-table line
+  at the wire level, and ps-verifies the spawn is clean afterwards.
+
+Not shipped here
+  The wire spec (spec/), the 131-case counted vector suite and the
+  battle-test selftest live in the protocol repo (working name
+  seams-protocol): clone it, run `cd kit && python3 battle.py selftest`,
+  expect 131/131. The protocol-side lineage record is the PROVENANCE.txt
+  there.
+
+License
+  LICENSE is the seed license file, copied verbatim from the seed root;
+  the package.json files point at it ("SEE LICENSE IN /LICENSE").
